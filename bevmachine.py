@@ -53,3 +53,40 @@ class BevMachine:
         print("All predictions:")
         self.predict_all()
 
+
+class BevCMachine(BevMachine):
+    def compute(self):
+        A, w = [], []
+        for input, output in self.bindings.items():
+            A.append(input)
+            w.append(output)
+        B = np.matrix([[bev_product(self.base, u, v) for v in A] for u in A])
+        C = B.I
+
+        w_ = [elt for elt in w if elt]
+        C_ = []
+        for i, row in enumerate(C):
+            if not w[i]:
+                continue
+
+            new_row = []
+            C_.append(new_row)
+            for j, elt in enumerate(row.tolist()[0]):
+                if w[j]:
+                    new_row.append(elt)
+
+        one_vector = np.transpose([w_])
+        w_ = np.matrix(C_).I.dot(one_vector)
+        w_ /= np.dot(np.transpose(w_), w_)[0,0]**0.5
+
+        new_w = []
+        w_ = np.transpose(w_).tolist()[0]
+        for i, elt in enumerate(w):
+            if elt:
+                new_w.append(w_.pop(0))
+            else:
+                new_w.append(0)
+
+        self.support_vectors = A
+        self.weights = C.dot(np.transpose(new_w))
+
